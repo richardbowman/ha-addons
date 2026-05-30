@@ -30,7 +30,14 @@ for entry_path in \
     "/usr/local/bin/browserless"; do
     if [ -f "$entry_path" ]; then
         echo "[browserless] Found entry point: $entry_path"
-        cd "$(dirname "$entry_path")"
+        # cd to app root (parent of build/dist), not the build dir itself,
+        # so node_modules resolution works correctly
+        DIR=$(dirname "$entry_path")
+        if [[ "$DIR" == */build ]] || [[ "$DIR" == */dist ]]; then
+            cd "$(dirname "$DIR")"
+        else
+            cd "$DIR"
+        fi
         exec node "$entry_path"
     fi
 done
