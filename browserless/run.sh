@@ -6,7 +6,8 @@ OPTIONS="/data/options.json"
 # Read add-on options
 TOKEN=$(jq -r '.token // ""' "$OPTIONS")
 CONCURRENT=$(jq -r '.concurrent // 5' "$OPTIONS")
-TIMEOUT=$(jq -r '.timeout // 30000' "$OPTIONS")
+TIMEOUT=$(jq -r '.timeout // 90000' "$OPTIONS")
+KEEP_ALIVE=$(jq -r '.keep_alive // false' "$OPTIONS")
 
 [ -n "$TOKEN" ] && export TOKEN
 export CONCURRENT
@@ -14,7 +15,22 @@ export TIMEOUT
 export PORT=3000
 export HOST=0.0.0.0
 
-echo "[browserless] Starting with CONCURRENT=$CONCURRENT TIMEOUT=$TIMEOUT PORT=$PORT TOKEN=${TOKEN:+(set)}"
+# Persistent Chrome profile — lives in the add-on's /data volume so it
+# survives restarts. When KEEP_ALIVE=true Browserless reuses one Chrome
+# instance, which means cookies/sessions persist for the whole uptime.
+# The profile dir is also passed back to callers via /config so that
+# per-request userDataDir can point at it for fully persistent cookies.
+PROFILE_DIR="/data/chrome-profile"
+mkdir -p "$PROFILE_DIR"
+export DATA="/data/browserless-data-dirs"
+mkdir -p "$DATA"
+
+if [ "$KEEP_ALIVE" = "true" ]; then
+  export KEEP_ALIVE=true
+  echo "[browserless] KEEP_ALIVE enabled — Chrome stays alive between requests, profile: $PROFILE_DIR"
+fi
+
+echo "[browserless] Starting with CONCURRENT=$CONCURRENT TIMEOUT=$TIMEOUT PORT=$PORT KEEP_ALIVE=${KEEP_ALIVE:-false} TOKEN=${TOKEN:+(set)}"
 
 # Try known binary locations first
 if command -v browserless &>/dev/null; then

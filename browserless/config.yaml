@@ -1,6 +1,6 @@
 name: Browserless
 description: Headless Chromium browser-as-a-service. Exposes a WebSocket + HTTP API compatible with Puppeteer, Playwright, and Selenium for local automation, screenshots, and web scraping.
-version: "1.0.2"
+version: "1.0.3"
 slug: browserless
 url: https://github.com/browserless/browserless
 arch:
@@ -15,12 +15,14 @@ ports_description:
 options:
   token: ""
   concurrent: 5
-  timeout: 30000
+  timeout: 90000
+  keep_alive: true
 
 schema:
   token: str
   concurrent: int
   timeout: int
+  keep_alive: bool
 
 startup: application
 boot: auto
